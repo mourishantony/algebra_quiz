@@ -1,0 +1,304 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Algebra Equation Quiz | Master Your Math Skills</title>
+  <meta name="description" content="Test your algebra skills with dynamically generated equations across linear, quadratic, and inequality categories. Three difficulty levels with timer and hints." />
+  <meta property="og:title" content="Algebra Equation Quiz" />
+  <meta property="og:description" content="Solve algebra equations in a beautifully designed interactive quiz game." />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧮</text></svg>" />
+  <link rel="stylesheet" href="{% static 'css/style.css' %}" />
+</head>
+<body>
+
+<!-- Animated background -->
+<div class="bg-orbs" aria-hidden="true">
+  <div class="bg-orb"></div>
+  <div class="bg-orb"></div>
+  <div class="bg-orb"></div>
+</div>
+
+<!-- Confetti canvas -->
+<canvas id="confetti-canvas" aria-hidden="true"></canvas>
+
+<!-- Toast -->
+<div id="toast" class="toast" role="alert" aria-live="polite"></div>
+
+<!-- App Shell -->
+<div id="app">
+
+  <!-- ══════════════════════════════════════════════════════════
+       WELCOME SCREEN
+  ══════════════════════════════════════════════════════════ -->
+  <section id="welcome-screen" class="screen" aria-label="Welcome">
+
+    <!-- Logo -->
+    <div class="logo-wrap">
+      <span class="logo-icon" aria-hidden="true">🧮</span>
+      <h1 class="logo-title">Algebra Quiz</h1>
+      <p class="logo-subtitle">Master equations. Beat the clock. Challenge yourself!</p>
+    </div>
+
+    <!-- Stats row -->
+    <div class="stats-row" aria-label="App statistics">
+      <div class="stat-mini">
+        <div class="stat-mini-value">8+</div>
+        <div class="stat-mini-label">Question Types</div>
+      </div>
+      <div class="stat-mini">
+        <div class="stat-mini-value">3</div>
+        <div class="stat-mini-label">Difficulty Levels</div>
+      </div>
+      <div class="stat-mini">
+        <div class="stat-mini-value">30s</div>
+        <div class="stat-mini-label">Per Question</div>
+      </div>
+    </div>
+
+    <!-- Welcome Form -->
+    <div class="card">
+      <div class="welcome-form">
+
+        <!-- Name -->
+        <div class="form-group">
+          <label class="form-label" for="player-name">Your Name</label>
+          <input
+            type="text"
+            id="player-name"
+            class="form-input"
+            placeholder="Enter your name…"
+            maxlength="50"
+            autocomplete="name"
+            aria-required="true"
+          />
+        </div>
+
+        <!-- Difficulty -->
+        <div>
+          <div class="section-title">Difficulty</div>
+          <div class="pill-group" role="group" aria-label="Select difficulty">
+            <button class="pill diff-pill" data-diff="easy"   id="diff-easy">🌱 Easy</button>
+            <button class="pill diff-pill active" data-diff="medium" id="diff-medium">🔥 Medium</button>
+            <button class="pill diff-pill" data-diff="hard"   id="diff-hard">⚡ Hard</button>
+          </div>
+        </div>
+
+        <!-- Category -->
+        <div>
+          <div class="section-title">Category <span style="color:var(--clr-text-muted);font-size:0.75rem;font-weight:400;text-transform:none">(optional — click to filter)</span></div>
+          <div class="pill-group" role="group" aria-label="Select category">
+            <button class="pill cat-pill" data-cat="linear"       id="cat-linear">Linear</button>
+            <button class="pill cat-pill" data-cat="quadratic"    id="cat-quadratic">Quadratic</button>
+            <button class="pill cat-pill" data-cat="inequality"   id="cat-inequality">Inequality</button>
+            <button class="pill cat-pill" data-cat="substitution" id="cat-substitution">Substitution</button>
+          </div>
+        </div>
+
+        <!-- Start -->
+        <button id="start-btn" class="btn btn-primary btn-lg" aria-label="Start the quiz">
+          Start Quiz →
+        </button>
+
+      </div>
+    </div>
+
+  </section>
+
+  <!-- ══════════════════════════════════════════════════════════
+       QUIZ SCREEN
+  ══════════════════════════════════════════════════════════ -->
+  <section id="quiz-screen" class="screen" aria-label="Quiz">
+
+    <!-- Top Bar -->
+    <div class="quiz-topbar">
+      <div class="quiz-meta">
+        <span id="q-counter" class="q-counter" aria-live="polite">Question 1 of 10</span>
+        <span id="q-category-badge" class="q-category-badge">—</span>
+      </div>
+
+      <div style="display:flex;align-items:center;gap:1.25rem">
+        <!-- Live Score -->
+        <div class="score-live" aria-label="Current score">
+          ⭐ <span id="score-live-val" class="score-live-value">0/0</span>
+        </div>
+
+        <!-- Timer -->
+        <div class="timer-wrap" role="timer" aria-label="Time remaining">
+          <svg class="timer-svg" width="60" height="60" viewBox="0 0 60 60">
+            <circle class="timer-ring-bg" cx="30" cy="30" r="26" />
+            <circle id="timer-ring-fg" class="timer-ring-fg" cx="30" cy="30" r="26" />
+          </svg>
+          <div id="timer-text" class="timer-text" aria-live="polite">30</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Progress Bar -->
+    <div class="progress-bar-wrap" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+      <div id="progress-fill" class="progress-bar-fill" style="width:0%"></div>
+    </div>
+
+    <!-- Question Card -->
+    <div class="card question-card">
+      <div id="question-number" class="question-number">Question</div>
+      <div id="question-text" class="question-text" aria-live="polite">
+        Loading…
+      </div>
+    </div>
+
+    <!-- Hint Box -->
+    <div id="hint-box" class="hint-box" role="note" aria-label="Hint">
+      <span>💡</span>
+      <span id="hint-text"></span>
+    </div>
+
+    <!-- Feedback Banner -->
+    <div id="feedback-banner" class="feedback-banner" role="alert" aria-live="assertive">
+      <span id="feedback-icon" class="feedback-icon"></span>
+      <div class="feedback-content">
+        <div id="feedback-title" class="feedback-title"></div>
+        <div id="feedback-explanation" class="feedback-explanation"></div>
+      </div>
+    </div>
+
+    <!-- Answer Section -->
+    <div class="answer-section">
+      <div class="answer-input-row">
+        <input
+          type="text"
+          id="answer-input"
+          class="form-input"
+          placeholder="Enter your answer…"
+          aria-label="Your answer"
+          autocomplete="off"
+          spellcheck="false"
+        />
+        <button id="submit-btn" class="btn btn-primary" aria-label="Submit answer">
+          Submit
+        </button>
+      </div>
+    </div>
+
+    <!-- Quiz Actions -->
+    <div class="quiz-actions">
+      <button id="hint-btn" class="btn btn-ghost btn-sm" aria-label="Show hint">
+        💡 Hint <span style="opacity:0.5;font-size:0.8em">(H)</span>
+      </button>
+      <button id="next-btn" class="btn btn-accent" style="display:none;" aria-label="Next question">
+        Next Question →
+      </button>
+    </div>
+
+  </section>
+
+  <!-- ══════════════════════════════════════════════════════════
+       RESULTS SCREEN
+  ══════════════════════════════════════════════════════════ -->
+  <section id="results-screen" class="screen" aria-label="Results">
+
+    <!-- Header -->
+    <div class="results-header">
+      <span id="results-emoji" class="results-emoji" aria-hidden="true">🏆</span>
+      <h2 id="results-title" class="results-title">Results</h2>
+      <p id="results-subtitle" class="results-subtitle"></p>
+    </div>
+
+    <!-- Score Hero -->
+    <div class="card score-hero">
+      <!-- SVG defs for ring gradients -->
+      <svg width="0" height="0" style="position:absolute">
+        <defs>
+          <linearGradient id="grad-success" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" style="stop-color:hsl(145,75%,52%)" />
+            <stop offset="100%" style="stop-color:hsl(170,70%,48%)" />
+          </linearGradient>
+          <linearGradient id="grad-accent" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" style="stop-color:hsl(185,90%,58%)" />
+            <stop offset="100%" style="stop-color:hsl(210,85%,62%)" />
+          </linearGradient>
+          <linearGradient id="grad-warning" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" style="stop-color:hsl(35,95%,60%)" />
+            <stop offset="100%" style="stop-color:hsl(20,90%,58%)" />
+          </linearGradient>
+          <linearGradient id="grad-danger" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" style="stop-color:hsl(350,85%,60%)" />
+            <stop offset="100%" style="stop-color:hsl(20,90%,55%)" />
+          </linearGradient>
+        </defs>
+      </svg>
+
+      <div style="display:flex;align-items:center;justify-content:center;gap:2.5rem;flex-wrap:wrap">
+        <!-- Ring -->
+        <div class="score-ring-wrap">
+          <svg class="score-ring-svg" width="160" height="160" viewBox="0 0 160 160" aria-hidden="true">
+            <circle class="score-ring-bg" cx="80" cy="80" r="70" />
+            <circle id="score-ring-fill" class="score-ring-fill grade-a" cx="80" cy="80" r="70" />
+          </svg>
+          <div class="score-hero-text">
+            <span id="score-hero-num" class="score-hero-number">—</span>
+            <span id="score-hero-total" class="score-hero-total">/ 10</span>
+          </div>
+        </div>
+
+        <!-- Grade & quick stats -->
+        <div style="text-align:center">
+          <div style="font-size:0.8rem;color:var(--clr-text-muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:.5rem">Grade</div>
+          <div id="grade-badge" class="grade-badge">A+</div>
+          <div style="margin-top:1rem;font-size:0.9rem;color:var(--clr-text-dim)">
+            Difficulty: <strong style="color:var(--clr-accent);text-transform:capitalize" id="result-difficulty"></strong>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Stats Grid -->
+    <div class="results-stats" role="list" aria-label="Quiz statistics">
+      <div class="result-stat" role="listitem">
+        <div id="stat-correct" class="result-stat-value text-success">—</div>
+        <div class="result-stat-label">Correct</div>
+      </div>
+      <div class="result-stat" role="listitem">
+        <div id="stat-wrong" class="result-stat-value text-danger">—</div>
+        <div class="result-stat-label">Incorrect</div>
+      </div>
+      <div class="result-stat" role="listitem">
+        <div id="stat-percent" class="result-stat-value text-accent">—</div>
+        <div class="result-stat-label">Accuracy</div>
+      </div>
+      <div class="result-stat" role="listitem">
+        <div id="stat-time" class="result-stat-value text-gold">—</div>
+        <div class="result-stat-label">Time Taken</div>
+      </div>
+    </div>
+
+    <!-- Category Breakdown -->
+    <div class="card">
+      <div class="breakdown-title">📊 Performance by Category</div>
+      <div id="category-breakdown" class="breakdown-chart">
+        <!-- Populated by JS -->
+      </div>
+    </div>
+
+    <!-- Review Answers -->
+    <div class="card">
+      <div class="breakdown-title" style="margin-bottom:1rem">📝 Review Answers</div>
+      <div id="review-list" class="review-list">
+        <!-- Populated by JS -->
+      </div>
+    </div>
+
+    <!-- Play Again -->
+    <button id="play-again-btn" class="btn btn-primary btn-lg" aria-label="Play again">
+      🔄 Play Again
+    </button>
+
+  </section>
+
+</div><!-- /#app -->
+
+<script src="{% static 'js/quiz.js' %}"></script>
+
+</body>
+</html>
