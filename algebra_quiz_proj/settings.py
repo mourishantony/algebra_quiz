@@ -19,9 +19,10 @@ INSTALLED_APPS = [
     'quiz',
 ]
 
-# ── Minimal middleware — no session / auth middleware ─────────────────────────
+# ── Middleware with WhiteNoise for static files serving ────────────────────────
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',  # Add WhiteNoise
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
@@ -66,3 +67,6 @@ USE_TZ = True
 STATIC_URL = '/static/'
 STATICFILES_DIRS = [BASE_DIR / 'static']
 STATIC_ROOT = BASE_DIR / 'staticfiles'
+
+# ── WhiteNoise compression and caching ────────────────────────────────────
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
