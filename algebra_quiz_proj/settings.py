@@ -1,15 +1,16 @@
 """
 Django settings for algebra_quiz_proj — No database version.
 """
+import os
 from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-SECRET_KEY = 'django-insecure-x$4*5&+7^gzwswxm)64egufvsi+wjgo5zsb8=38u5snn=lh5cg'
+SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-x$4*5&+7^gzwswxm)64egufvsi+wjgo5zsb8=38u5snn=lh5cg')
 
-DEBUG = True
+DEBUG = os.environ.get('DEBUG', 'False') == 'True'
 
-ALLOWED_HOSTS = ['127.0.0.1', 'localhost']
+ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
 
 # ── Minimal apps — no DB-dependent apps ───────────────────────────────────────
 INSTALLED_APPS = [
@@ -43,7 +44,7 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'algebra_quiz_proj.wsgi.application'
 
-# ── No database ───────────────────────────────────────────────────────────────
+# ── No database ──────────────────────────────────────────────────────────
 # The quiz app never reads or writes a database.
 # A minimal in-memory SQLite entry is kept only so Django's test runner
 # (which always calls flush/teardown) does not crash.
@@ -60,7 +61,7 @@ TIME_ZONE = 'UTC'
 USE_I18N = True
 USE_TZ = True
 
-# ── Static files ──────────────────────────────────────────────────────────────
+# ── Static files ──────────────────────────────────────────────────────────
 STATIC_URL = '/static/'
 STATICFILES_DIRS = [BASE_DIR / 'static']
 STATIC_ROOT = BASE_DIR / 'staticfiles'
